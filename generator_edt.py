@@ -256,8 +256,10 @@ def main():
         count_nodes(lroot)
         
         summary_lines = ["Resumen de actividades:"]
+        total_activities = sum(level_counts.values())
         for lvl in sorted(level_counts.keys()):
             summary_lines.append(f" - Nivel {lvl}: {level_counts[lvl]} actividades")
+        summary_lines.append(f" Total actividades: {total_activities}")
         summary_lines.append(f" Total tareas finales (hojas): {leaf_count}")
         # Create a 3x larger font for the summary
         try:
