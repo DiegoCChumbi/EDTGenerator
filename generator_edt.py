@@ -53,24 +53,38 @@ class LayoutNode:
         self.total_width = 0
         self.total_height = 0
 
-def get_box_height(text, font, width, min_h, line_h):
+def get_id_width(id_str):
+    id_w = 40 * SCALE
+    if len(id_str) > 3: id_w = 55 * SCALE
+    if len(id_str) > 6: id_w = 70 * SCALE
+    return id_w
+
+def get_box_height(text, font, avail_w, min_h, line_h):
     words = text.split()
     lines = []
     curr_line = ""
     for w in words:
         test = curr_line + (" " if curr_line else "") + w
         bbox = font.getbbox(test)
-        if bbox[2] - bbox[0] < (width - 60 * SCALE): # padding
+        tw = bbox[2] - bbox[0]
+        if tw <= avail_w:
             curr_line = test
         else:
-            lines.append(curr_line)
+            if curr_line:
+                lines.append(curr_line)
             curr_line = w
-    lines.append(curr_line)
-    return max(min_h, len(lines) * line_h + 12 * SCALE), lines
+    if curr_line:
+        lines.append(curr_line)
+    
+    # Add padding for top and bottom
+    needed_h = len(lines) * line_h + 15 * SCALE
+    return max(min_h, needed_h), lines
 
 def calculate_layout(lnode, box_w, min_h, h_spacing, v_spacing, font, line_h, start_x, start_y):
     # This function now sets ABSOLUTE coordinates for each node
-    lnode.height, lnode.text_lines = get_box_height(lnode.node['text'], font, box_w, min_h, line_h)
+    id_w = get_id_width(lnode.node['id'])
+    avail_w = box_w - id_w - 12 * SCALE # 6px padding on each side of text
+    lnode.height, lnode.text_lines = get_box_height(lnode.node['text'], font, avail_w, min_h, line_h)
     lnode.width = box_w
     lnode.x = start_x
     lnode.y = start_y
@@ -103,9 +117,7 @@ def draw_node(draw, lnode, ox, oy, font_id, font_text, BOX_W):
     bx, by = ox + lnode.x, oy + lnode.y
     bh, bw = lnode.height, lnode.width
     
-    id_w = 40 * SCALE
-    if len(lnode.node['id']) > 3: id_w = 55 * SCALE
-    if len(lnode.node['id']) > 6: id_w = 70 * SCALE
+    id_w = get_id_width(lnode.node['id'])
 
     # Draw connectors to children (Vertical layout)
     line_thickness = max(1, SCALE // 2)
